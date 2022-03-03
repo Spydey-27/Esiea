@@ -1,39 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int getSumOfEightNeighbors (int nbLin, int nbCol, int iArray[nbLin][nbCol], int eltLin, int eltCol)
+void print_tab(int nb_col, int nb_lig, int **tab)
 {
-    int somme = 0;
-
-    for (int i = 0; i < nbLin; i++)    
+    for(int i = 0; i < nb_lig; i ++)
     {
-        for (int j = 0; j < nbCol; j++)
+        for (int j = 0; j < nb_col; j++)
         {
-            if( eltCol >= 0 && eltCol < nbCol && eltLin >= 0 && eltLin < nbLin)
-            {
-                if( (j == (eltCol +1) || j == (eltCol -1)) && i == eltLin )
-                {
-                    somme += iArray[i][j];
+            printf("%d ", tab[i][j]);
+        }
+        printf("\n");
+    }
+}
 
-                }
-                if ((i == (eltLin + 1) || i == (eltLin -1)) && j == eltCol)
-                {
-                    somme += iArray[i][j];
-
-                }
-                if( (i == (eltLin +1) || i == (eltLin -1)) && (j == (eltCol +1)|| j == (eltCol -1)))
-                {
-                    somme += iArray[i][j];
-
-                }
-            }
+int defense_immunitaire(int nb_col, int nb_lig, int **tab, int *coord_x, int *coord_y, int *virulence)
+{
+    for(int i = 0; i < nb_lig; i ++)
+    {
+        for (int j = 0; j < nb_col; j++)
+        {
+            scanf("%d ", &tab[i][j]);
         }
         
     }
-    return somme;
+
+    scanf("%d %d", coord_x, coord_y);
+    scanf("%d", virulence);
+
+    printf("Taille = %d x %d\n", nb_lig, nb_col);
+    print_tab(nb_col,nb_lig,tab);
+    printf("Foyer = (%d, %d)\n", *coord_x, *coord_y);
+    printf("Virulence = %d\n\n", *virulence);
+    return 0;
 }
 
-int init(int nb_col, int nb_lig, int **tab)
+void init(int nb_col, int nb_lig, int **tab)
 {
     for(int i; i < nb_lig; i ++)
     {
@@ -45,64 +46,89 @@ int init(int nb_col, int nb_lig, int **tab)
     }
 }
 
+int VIRUS(int nb_lin, int nb_col,int **tab, int **virus, int virulence, int coord_x, int coord_y)
+{  
+       for(int i = -1; i <= 1; i++)
+       {
+           for(int j = -1; j <= 1; j++)
+           {    
+                if( ((coord_y+j) >= 0 && (coord_y+j) < nb_lin && (coord_x+ i) >= 0 && (coord_x+i )< nb_col )&& ( i!=0 || j!=0 ))
+                {
+
+                    if( tab[coord_x +i][coord_y +j] <= virulence )
+                    {
+                        virus[coord_x][coord_y]= -1;
+                        VIRUS(nb_lin,nb_col,tab,virus,virulence,coord_x +i,coord_y +j);
+                    }
+                }
+            }
+        
+        }
+    
+    
+    return 0;
+}
+
 int main()
 {
     int nb_col;
     int nb_lig;
     scanf("%d %d", &nb_lig, &nb_col);
     
-    int **tab = NULL;
-    tab = malloc(nb_lig * sizeof(int*));
-
-    if(tab == NULL)
+    int (**population) =  malloc(nb_lig * sizeof(int*));
+    int (**virus) =  malloc(nb_lig * sizeof(int*));
+    
+    //init(nb_col, nb_lig, virus);
+    if(population == NULL || virus == NULL)
         {
-            exit(0);
+            exit(-1);
         }
 
     for (int i = 0; i < nb_lig; i++)
     {
-        tab[i] = malloc(nb_col * sizeof(int));
-        if(tab[i] == NULL)
+        
+        population[i] = malloc(nb_col * sizeof(int));
+        virus[i] = malloc(nb_col * sizeof(int));
+
+        if(population[i] == NULL || virus == NULL)
         {
-            exit(0);
+            for (i = i-1; i >= 0; i--)
+            {
+                free(population[i]);
+                free(virus[i]);
+
+            }
+            free(population);
+            free(virus);
+
+            exit(-1);
         }
     }
     
 
-    int coord_x, coord_y;
-    int virulence;
-    init(nb_lig,nb_col, tab);
-    scanf("%d %d", &nb_lig, &nb_col);
-    for(int i; i < nb_lig; i ++)
-    {
-        for (int j = 0; j < nb_col; j++)
-        {
-            scanf("%d ", &tab[i][j]);
-        }
-        
-    }
+    
 
-    scanf("%d %d", &coord_x, &coord_y);
-    scanf("%d", &virulence);
+    int coord_x = 0, coord_y = 0;
+    int virulence = 0;
+    defense_immunitaire(nb_col,nb_lig,population,&coord_x,&coord_y,&virulence);
+    
+    virus[coord_x][coord_y] = -2;
+    VIRUS(nb_lig,nb_col,population,virus,virulence,coord_x,coord_y);
+    
+    printf("PROPAGATION DU VIRUS\n");
+    print_tab(nb_col,nb_lig,virus);
 
-    printf("Taille = %d x %d\n", nb_lig, nb_col);
-    for(int i; i < nb_lig; i ++)
-    {
-        for (int j = 0; j < nb_col; j++)
-        {
-            printf("%d ", tab[i][j]);
-        }
-        printf("\n");
-    }
-    printf("Foyer = (%d, %d)", coord_x, coord_y);
-    printf("Virulence = %d", virulence);
-
+    
     for (int i = 0; i < nb_lig; i++)
     {
-        free(tab[i]);
+        free(population[i]);
+        free(virus[i]);
+
     }
 
-    free(tab);
+    free(population);
+    free(virus);
+
     
     return 0;
 }
